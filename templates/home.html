@@ -8,10 +8,9 @@
     <script src="/static/js/upload.js" defer></script>
 </head>
 <body>
-
     <form action="/upload-files" method="post" enctype="multipart/form-data">
         <label for="file">Choose a file:</label>
-        <input type="file" id="file" name="files" accept=".txt, .pdf, .docx, .mp4, .mkv, .avi" multiple>
+        <input type="file" id="file" name="files" accept="*/*" multiple>
         <br>
         <div id="progress-bar">
             <div id="upload-progress"></div>

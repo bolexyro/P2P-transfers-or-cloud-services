@@ -13,7 +13,11 @@ git clone https://github.com/adebola-duf/P2P-transfers-or-cloud-services.git
 
 Set up the virtual environment
 ```sh
-python3 -m venv env
+python -m venv env
+```
+
+Activate the virtual environment
+```
 env/Scripts/activate  # for Windows
 source env/bin/activate  # for Unix or MacOS
 ```

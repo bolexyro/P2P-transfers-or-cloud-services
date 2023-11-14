@@ -10,7 +10,7 @@ body {
 }
 
 .success-message {
-    background-color: rgb(61, 159, 0);
+    background-color: red;
     color: #fff;
     padding: 20px;
     border-radius: 5px;

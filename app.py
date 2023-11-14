@@ -1,5 +1,6 @@
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi import FastAPI, File, UploadFile, status, HTTPException
-from fastapi.responses import HTMLResponse
+from fastapi.responses import HTMLResponse, FileResponse, StreamingResponse
 from fastapi.staticfiles import StaticFiles
 from typing import Annotated
 import os
@@ -11,7 +12,7 @@ upload_dir = "uploads"
 os.makedirs(upload_dir, exist_ok=True)
 
 
-@app.get(path="/", response_class=HTMLResponse)
+@app.get(path="/")
 def home():
     with open("templates/home.html", "r") as f:
         html_content = f.read()
@@ -37,4 +38,20 @@ async def upload_files(files: Annotated[list[UploadFile], File(description="Uplo
         return HTMLResponse(html_content, status_code=status.HTTP_200_OK)
 
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        with open("templates/no_upload.html", "r") as f:
+            html_content = f.read()
+        return HTMLResponse(content=html_content, status_code=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+@app.get(path="/downloads")
+async def download(filename: str):
+    return FileResponse(path=f"uploads/{filename}", filename=filename)
+
+
+@app.get("/stream")
+def main():
+    def iterfile():  #
+        with open("Counting Stars - OneRepublic (violin_cello_bass cover) Simply Three _ Shaorin Music.mp4", mode="rb") as file_like:  #
+            yield from file_like  #
+
+    return StreamingResponse(iterfile(), media_type="video/mp4")
