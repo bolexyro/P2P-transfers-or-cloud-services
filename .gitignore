@@ -1,4 +1,4 @@
 env/
 uploads/
 __pycache__/
-websocket.py
+websocket/
