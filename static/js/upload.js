@@ -6,11 +6,19 @@ function CreateWebsocket(){
     ws = new WebSocket(`ws://localhost:8000/ws/${sender_id}/${receiver_id}`);
     console.log("This is ws: ", ws)
     ws.onmessage = function(event) {
-        var messages = document.getElementById('messages')
-        var message = document.createElement('li')
-        var content = document.createTextNode(event.data)
-        message.appendChild(content)
-        messages.appendChild(message)
+        // var messages = document.getElementById('messages')
+        // var message = document.createElement('li')
+        // var content = document.createTextNode(event.data)
+        // message.appendChild(content)
+        // messages.appendChild(message)
+
+        var download_link = document.getElementById("download-link");
+        download_link.textContent = "download"        
+        download_link.href = event.data
+
+        var streaming_link = document.getElementById("streaming-link");
+        streaming_link.textContent = "stream"        
+        streaming_link.href = event.data
     };
 }
 
@@ -19,7 +27,8 @@ function uploadFile() {
     const fileInput = document.getElementById('file');
     const progressBar = document.getElementById('upload-progress');
     const formData = new FormData(document.getElementById('upload-form'));
-
+    const fileName = fileInput.files[0].name;
+    console.log('File Name:', fileName);
     const xhr = new XMLHttpRequest();
 
     xhr.upload.onprogress = function (event) {
@@ -35,6 +44,7 @@ function uploadFile() {
             console.log('File uploaded successfully!');
             const responseHtml = xhr.responseText;
             document.body.innerHTML = responseHtml;
+            ws.send(`http://127.0.0.1:8000/stream?filename=${fileName}`);
         } else {
             console.error('Error uploading file:', xhr.statusText);
         }

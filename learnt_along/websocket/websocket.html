@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Chat</title>
+        <!-- <script src="websocket.js" defer></script> -->
+    </head>
+    <body>
+        <h1>WebSocket Chat</h1>
+        <input type="text" id="receiver-id">
+        <BUTton onclick="CreateWebsocket()">Create websocket connection</BUTton>
+        <h2>Your ID: <span id="sender-id"></span></h2>
+        <form action="" onsubmit="sendMessage(event)">
+            <input type="text" id="messageText" autocomplete="off"/>
+            <button>Send</button>
+        </form>
+        <ul id='messages'>
+        </ul>
+        <script>
+            var sender_id = Date.now();
+            document.querySelector("#sender-id").textContent = sender_id;
+            function CreateWebsocket(){
+                var receiver_id = document.getElementById("receiver-id").value;
+                console.log(receiver_id)
+                ws = new WebSocket(`ws://localhost:8000/ws/${sender_id}/${receiver_id}`);
+                console.log("This is ws: ", ws)
+                ws.onmessage = function(event) {
+                    var messages = document.getElementById('messages')
+                    var message = document.createElement('li')
+                    var content = document.createTextNode(event.data)
+                    message.appendChild(content)
+                    messages.appendChild(message)
+                };
+            }
+            
+            function sendMessage(event) {
+                var input = document.getElementById("messageText")
+                ws.send(input.value)
+                input.value = ''
+                event.preventDefault()
+            }
+        </script>
+        
+    </body>
+</html>

@@ -48,9 +48,9 @@ async def download(filename: str):
 
 
 @app.get("/stream")
-def main():
+def main(filename: str):
     def iterfile():  #
-        with open("Counting Stars - OneRepublic (violin_cello_bass cover) Simply Three _ Shaorin Music.mp4", mode="rb") as file_like:  #
+        with open(f"uploads/{filename}", mode="rb") as file_like:  #
             yield from file_like  #
 
     return StreamingResponse(iterfile(), media_type="video/mp4")
@@ -93,9 +93,10 @@ async def websocket_endpoint(websocket: WebSocket, sender_id: int, receiver_id: 
     try:
         while True:
             data = await websocket.receive_text()
+            print(data)
             # await manager.send_personal_message(f"You wrote: {data}", websocket)
             # await manager.broadcast(f"Client #{sender_id} says: {data}")
-            await manager.send_to(f"#{sender_id} says {data}", receiver_id)
+            await manager.send_to(data, receiver_id)
     except WebSocketDisconnect:
         manager.disconnect(websocket)
         await manager.broadcast(f"Client #{sender_id} left the chat")
