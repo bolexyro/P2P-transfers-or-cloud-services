@@ -59,14 +59,15 @@ def main(filename: str):
         with open(f"uploads/{filename}", mode="rb") as file_like:  #
             yield from file_like  #
 
-    return StreamingResponse(iterfile(), media_type="video/mp4")
+    return StreamingResponse(iterfile())
 
 
 class ConnectionManager:
     def __init__(self):
         self.id_websocket_dict: Dict[int, WebSocket] = {}
-        # senderid: [filename, receiver_id]
-        self.id_file: Dict[int, list[str, int]] = {}
+        # this dictionary would store stuffs in this format {"conn0": {sender_id: 9009, "filename": xyz.mp4, "receiver_id": 4244}}
+        self.sender_id_file_receiver_id_dict: Dict[str, Dict[str, int | str]] = {
+        }
 
     async def connect(self, websocket: WebSocket, client_id: int):
         await websocket.accept()
@@ -90,13 +91,11 @@ class ConnectionManager:
     async def send_to(self, messsgae: str, receiver_id: int):
         video_extensions = ['.mp4', '.mkv', '.avi', '.mov', '.wmv', '.flv']
 
-        # Now, you can use the IP address in your JSON
         is_video = False
         for extensions in video_extensions:
             if extensions in messsgae:
                 json_data = {"download_link": f"/download/{messsgae}",
                              "stream_link": f"/stream/{messsgae}"}
-                # json_data = json.dumps(json_data)
                 is_video = True
         if is_video:
             await self.id_websocket_dict[receiver_id].send_json(json_data)
@@ -114,30 +113,30 @@ async def websocket_endpoint(websocket: WebSocket, sender_id: int, receiver_id: 
     try:
         while True:
             data = await websocket.receive_text()
-            print(data)
-            manager.id_file[sender_id] = [data, receiver_id]
-            print(manager.id_file)
-            # await manager.send_personal_message(f"You wrote: {data}", websocket)
-            # await manager.broadcast(f"Client #{sender_id} says: {data}")
+            connection_index = 0
+            # in a case where the sender sends one file and later sends another one. The first one wont be delteed if receiver isconnects.
+            manager.sender_id_file_receiver_id_dict[f"conn{connection_index}"] = {
+                "sender_id": sender_id, "filename": data, "receiver_id": receiver_id}
+            connection_index += 1
+            print(manager.sender_id_file_receiver_id_dict)
+
             await manager.send_to(data, receiver_id)
     except WebSocketDisconnect:
         # make sure they have closed any tab that is streaming else it won't work.
-        for sender_id in manager.id_file:
-            # if the sender disconnects
-            if manager.id_file.get(sender_id, 0):
-                # os.remove(os.path.join(
-                #     upload_dir, manager.id_file[sender_id][0]))
-                pass
-            # if the receiver disconnects
-            elif receiver_id == manager.id_file[sender_id][1]:
+        # if receiver disconnects is when we want to delete the file.
+        deleted_connection = ""
+        sender_disconnects = True
+        for connection, sender_file_receiver_dict in manager.sender_id_file_receiver_id_dict.items():
+            if sender_id == sender_file_receiver_dict["receiver_id"]:
                 os.remove(os.path.join(
-                    upload_dir, manager.id_file[sender_id][0]))
-                print(os.path.join(upload_dir, manager.id_file[sender_id][0]))
+                    upload_dir, sender_file_receiver_dict["filename"]))
+                # i am breaking because each sender would have only one key value pair in the dict. so when we find that one, we should delete it immediately
+                deleted_connection = connection
+                sender_disconnects = False
+                break
+        if not sender_disconnects:
+            del manager.sender_id_file_receiver_id_dict[deleted_connection]
         manager.disconnect(websocket)
-        if manager.id_file.get(sender_id):
-            del manager.id_file[sender_id]
-            # if sender disconnects first, their stuff id id_file would be deleted and so when receiver disconnects, the file is not deleted.
-        # await manager.broadcast(f"Client #{sender_id} left the chat")
 
 
 # consider the stuff when you send multiple videos, how do you stream

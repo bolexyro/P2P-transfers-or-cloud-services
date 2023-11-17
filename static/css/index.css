@@ -64,3 +64,8 @@ button {
     color: white;
     display: inline;
 }
+
+#stream-button {
+    background-color: grey;
+    color: black;
+}

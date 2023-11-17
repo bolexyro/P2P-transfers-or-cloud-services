@@ -34,8 +34,8 @@ function CreateWebsocket(){
 function downloadFile() {
     // Redirect to the download link
     window.location.href = document.getElementById("download-button").href;
-    document.getElementById("stream-button").style.display = "none";
-    document.getElementById("download-button").style.display = "none"
+    // document.getElementById("stream-button").style.display = "none";
+    // document.getElementById("download-button").style.display = "none"
 }
 
 // Function to handle the stream button click
@@ -43,8 +43,8 @@ function streamFile() {
     // Redirect to the stream link
     window.open(document.getElementById("stream-button").href)
     // window.location.href = 
-    document.getElementById("stream-button").style.display = "none";
-    document.getElementById("download-button").style.display = "none"
+    // document.getElementById("stream-button").style.display = "none";
+    // document.getElementById("download-button").style.display = "none"
 }
 
 

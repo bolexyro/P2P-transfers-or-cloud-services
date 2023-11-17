@@ -32,3 +32,14 @@ Run the server
 uvicorn app:app --reload --host 0.0.0.0 --port 8000
 ```
 
+## Reflection
+In the quest for a decentralized P2P File Transfer System, the journey took unexpected turns. The dream of direct device-to-device file swaps got a reality check, nudging us to create a cloud pitstop. A bit of a detour, yes, but think of it as your files enjoying a quick cloud siesta before reaching their destination.
+
+Unveiling the mysteries of peer-to-peer communication within local networks was enlightening, even if we're not there yet. So, for now, Covenant University students, toss your files into the cloud basket, and let's keep the data plans intact. We're still on the road to making sharing as easy as a Sunday picnic, with a few cloud-shaped twists along the way.
+
+Stay tuned for more updates – who knows, maybe one day those files will zip through the air straight to your friend's device. Until then, happy cloud-hopping!
+
+## Cheers to the Journey! 🚀
+
+![End Result](static/p2p1.png)
+![End Result](static/p2p2.png)
