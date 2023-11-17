@@ -59,7 +59,7 @@ def main(filename: str):
         with open(f"uploads/{filename}", mode="rb") as file_like:  #
             yield from file_like  #
 
-    return StreamingResponse(iterfile())
+    return StreamingResponse(iterfile(), media_type="video/mp4")
 
 
 class ConnectionManager:
