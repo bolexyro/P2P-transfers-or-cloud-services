@@ -2,25 +2,51 @@ var sender_id = Date.now();
 document.querySelector("#sender-id").textContent = sender_id;
 function CreateWebsocket(){
     var receiver_id = document.getElementById("receiver-id").value;
-    console.log(receiver_id)
-    ws = new WebSocket(`ws://localhost:8000/ws/${sender_id}/${receiver_id}`);
+    var currentUrl = window.location.hostname;
+    ws = new WebSocket(`ws://${currentUrl}:8000/ws/${sender_id}/${receiver_id}`);
     console.log("This is ws: ", ws)
     ws.onmessage = function(event) {
-        // var messages = document.getElementById('messages')
-        // var message = document.createElement('li')
-        // var content = document.createTextNode(event.data)
-        // message.appendChild(content)
-        // messages.appendChild(message)
+        var message = event.data
+        
+        try{
+            // Attempt to parse the mesasage as JSON
+            var jsonMessage = JSON.parse(message);
 
-        var download_link = document.getElementById("download-link");
-        download_link.textContent = "download"        
-        download_link.href = event.data
+            // Show both download and stream buttons
+            document.getElementById("stream-button").style.display = "inline-block";
+            document.getElementById("download-button").style.display = "inline-block";
 
-        var streaming_link = document.getElementById("streaming-link");
-        streaming_link.textContent = "stream"        
-        streaming_link.href = event.data
+            // Set the href attributes for download and stream buttons
+            document.getElementById("download-button").href = jsonMessage.download_link;
+            document.getElementById("stream-button").href = jsonMessage.stream_link;
+
+            }catch(e){
+            // If parsing as JSON fails, treat it as a text message
+            // Show only the download button
+                document.getElementById("download-button").style.display = "inline-block";
+
+                // Set the href attribute for the download button
+                document.getElementById("download-button").href = message;
+        }
+        }
+
     };
+function downloadFile() {
+    // Redirect to the download link
+    window.location.href = document.getElementById("download-button").href;
+    document.getElementById("stream-button").style.display = "none";
+    document.getElementById("download-button").style.display = "none"
 }
+
+// Function to handle the stream button click
+function streamFile() {
+    // Redirect to the stream link
+    window.open(document.getElementById("stream-button").href)
+    // window.location.href = 
+    document.getElementById("stream-button").style.display = "none";
+    document.getElementById("download-button").style.display = "none"
+}
+
 
 
 function uploadFile() {
@@ -42,9 +68,9 @@ function uploadFile() {
     xhr.onload = function () {
         if (xhr.status === 200) {
             console.log('File uploaded successfully!');
-            const responseHtml = xhr.responseText;
-            document.body.innerHTML = responseHtml;
-            ws.send(`http://127.0.0.1:8000/stream?filename=${fileName}`);
+            // const responseHtml = xhr.responseText;
+            // document.body.innerHTML = responseHtml;
+            ws.send(fileName);
         } else {
             console.error('Error uploading file:', xhr.statusText);
         }
