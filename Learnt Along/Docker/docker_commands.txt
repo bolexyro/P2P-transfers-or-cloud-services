@@ -1,0 +1,6 @@
+docker build -t . <tag for the image>
+docker images or docker image ls
+docker run <tag for the image>
+docker ps or docker ps -a (show all the docker containers running (-a shows the ones that are also not running) on your computer - ps means processes)
+docker run -p <host-port>:<container-port> <image-name>
+docker stop <container_id>

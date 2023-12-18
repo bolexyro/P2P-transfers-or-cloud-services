@@ -1,8 +1,9 @@
 from fastapi import FastAPI, File, UploadFile, status, HTTPException, WebSocket, WebSocketDisconnect, status, BackgroundTasks
 from fastapi.responses import HTMLResponse, FileResponse, StreamingResponse
 from fastapi.staticfiles import StaticFiles
-from typing import Annotated, Dict
+from typing import Annotated, Dict, Union
 import os
+import uvicorn
 
 app = FastAPI()
 
@@ -66,7 +67,8 @@ class ConnectionManager:
     def __init__(self):
         self.id_websocket_dict: Dict[int, WebSocket] = {}
         # this dictionary would store stuffs in this format {"conn0": {sender_id: 9009, "filename": xyz.mp4, "receiver_id": 4244}}
-        self.sender_id_file_receiver_id_dict: Dict[str, Dict[str, int | str]] = {
+        # i coul have also done Dict[str, int | str]
+        self.sender_id_file_receiver_id_dict: Dict[str, Dict[str, Union[int, str]]] = {
         }
 
     async def connect(self, websocket: WebSocket, client_id: int):
@@ -138,6 +140,9 @@ async def websocket_endpoint(websocket: WebSocket, sender_id: int, receiver_id: 
             del manager.sender_id_file_receiver_id_dict[deleted_connection]
         manager.disconnect(websocket)
 
+
+if __name__ == "__main__":
+    uvicorn.run(app=app, host="0.0.0.0", port=8000)
 
 # consider the stuff when you send multiple videos, how do you stream
 # , so handle the error that is throwing when client oesn't close the streaming tab befrore disconnecting websocket

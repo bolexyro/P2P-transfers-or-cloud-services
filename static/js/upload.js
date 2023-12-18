@@ -1,5 +1,6 @@
 var sender_id = Date.now();
 document.querySelector("#sender-id").textContent = sender_id;
+
 function CreateWebsocket(){
     var receiver_id = document.getElementById("receiver-id").value;
     var currentUrl = window.location.hostname;
@@ -24,7 +25,6 @@ function CreateWebsocket(){
             // If parsing as JSON fails, treat it as a text message
             // Show only the download button
                 document.getElementById("download-button").style.display = "inline-block";
-
                 // Set the href attribute for the download button
                 document.getElementById("download-button").href = message;
         }

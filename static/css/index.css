@@ -62,7 +62,17 @@ input[type="submit"] {
 button {
     background-color: #e74c3c;
     color: white;
-    display: inline;
+    /* display: inline; */
+    /* .button { */
+        /* background-color: #4CAF50; Green */
+        border: none;
+        color: black;
+        padding: 15px 32px;
+        text-align: center;
+        text-decoration: none;
+        /* display: inline-block; */
+        font-size: 16px;
+      /* } */
 }
 
 #stream-button {
