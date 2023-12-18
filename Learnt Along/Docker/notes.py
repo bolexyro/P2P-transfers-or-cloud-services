@@ -119,12 +119,12 @@
 # NB: The docker image is portable
 
 
-# # One thing that you should note is that when dealing with ports, you need to map your host port to your container port. 
+# # One thing that you should note is that when dealing with ports, you need to map your host port to your container port.
 # Container Ports: These are the ports on which services inside the Docker container are running. When you run a service, like a web server, inside a Docker container, it listens on a specific port within the container.
 # Host Ports: These are the ports on the host machine that you want to map to the container ports. The host port is the entry point from outside the Docker container.
 
 # You can specify port mappings using the -p or --publish option when running a Docker container.
-# So, the syntax is 
+# So, the syntax is
 # docker run -p <host-port>:<container-port> <image-name>
 
 # example
@@ -133,10 +133,16 @@
 # So, if you open your web browser and navigate to http://localhost:8080, Docker will forward the request to the Nginx web server running inside the container on port 80. This allows you to access the web server and its services as if it were running directly on your host machine.
 
 
-
 # TO STOP A RUNNING CONTAINER
 # docker stop <container_id>
+
+# TO DELETE AN IMAGE
+# docker image rm -f <name-of-image> or <image-id>
+
+# TO RENAME AN IMAGE
+# docker tag <old-name> <new-name> # this creates a new image with the new name but you can go ahead and delte the old image if you have no need for it
 
 # PUSHING OUR DOCKER IMAGE TO DOCKER HUB SO ANYONE CAN ACCESS IT
 # We are going to be pushing the image to docker hub as a repo
 # 1. docker login
+# 2. docker push <image-name>:<tag> # the tag is pretty much used to specify the version of the image. I think it is usually latest

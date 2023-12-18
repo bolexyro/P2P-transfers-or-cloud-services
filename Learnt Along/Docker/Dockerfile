@@ -23,7 +23,7 @@ RUN pip install -r requirements.txt
 # we are using the CMD command to run a command 
 # if we hadn't set our working directory to /app, our command would have to be 
 # CMD ["uvicorn", "app/app:app", "--reload", "--host", "0.0.0.0", "--port", "8000"]
-CMD ["uvicorn", "app:app", "--reload", "--host", "0.0.0.0", "--port", "8000"]
+CMD ["python", "app.py"]
 
 # In the context of Docker, a "base image" refers to the initial, starting point for a Docker container. It serves as the foundation or core layer 
 # upon which additional layers are built. A base image typically contains a minimal operating system environment along with certain pre-installed 
