@@ -43,15 +43,16 @@ async def upload_files(files: Annotated[list[UploadFile], File(description="Uplo
         return HTMLResponse(content=html_content, status_code=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
-def delete_file(filename):
+@app.delete(path="/delete-file/{filename}")
+def delete_file(filename: str):
     os.remove(f"uploads/{filename}")
-    print(f"deleted {filename}")
+    return {"message": f"File '{filename}' deleted successfully"}
 
 
 @app.get(path="/download/{filename}")
 async def download(filename: str, background_tasks: BackgroundTasks):
     # background_tasks.add_task(delete_file, filename)
-    # So i think if the filenames contains # tags, it would lead to afile not found error
+    # So i think if the filenames contains # tags, it would lead to a file not found error
     print("filename is", filename)
     return FileResponse(path=f"uploads/{filename}", filename=filename)
 
@@ -72,9 +73,16 @@ class ConnectionManager:
         # i coul have also done Dict[str, int | str]
         self.sender_receiver: dict[int, int] = {}
 
-    async def connect(self, websocket: WebSocket, client_id: int):
+    async def connect(self, websocket: WebSocket, sender_id: int, receiver_id):
         await websocket.accept()
-        self.id_websocket_dict[client_id] = websocket
+        self.id_websocket_dict[sender_id] = websocket
+
+        already_there = False
+        for key, value in self.sender_receiver.items():
+            if sender_id == key or sender_id == value:
+                already_there = True
+        if not already_there:
+            self.sender_receiver[sender_id] = receiver_id
 
     def disconnect(self, websocket: WebSocket):
         client_id_websocket_connection_to_delete = 0
@@ -97,10 +105,15 @@ class ConnectionManager:
 
 manager = ConnectionManager()
 
+broken_connections = []
+# to store sender's whose receivers have gone or receivers whose senders have gone
+# sender_receiver = {}
+
 
 @app.websocket("/ws/{sender_id}/{receiver_id}")
 async def websocket_endpoint(websocket: WebSocket, sender_id: int, receiver_id: int):
-    await manager.connect(websocket, sender_id)
+    await manager.connect(websocket, sender_id, receiver_id)
+    # for sender_
     try:
         while True:
             data = await websocket.receive_json()
@@ -109,21 +122,22 @@ async def websocket_endpoint(websocket: WebSocket, sender_id: int, receiver_id: 
             await manager.send_to(data, receiver_id)
 
     except WebSocketDisconnect:
-        # make sure they have closed any tab that is streaming else it won't work.
-        # if receiver disconnects is when we want to delete the file.
-        deleted_connection = ""
-        sender_disconnects = True
-        for connection, sender_file_receiver_dict in manager.sender_id_file_receiver_id_dict.items():
-            if sender_id == sender_file_receiver_dict["receiver_id"]:
-                # os.remove(os.path.join(
-                #     upload_dir, sender_file_receiver_dict["filename"]))
-                # i am breaking because each sender would have only one key value pair in the dict. so when we find that one, we should delete it immediately
-                deleted_connection = connection
-                sender_disconnects = False
-                break
-        if not sender_disconnects:
-            del manager.sender_id_file_receiver_id_dict[deleted_connection]
-        manager.disconnect(websocket)
+        print("hei")
+    #     # make sure they have closed any tab that is streaming else it won't work.
+    #     # if receiver disconnects is when we want to delete the file.
+    #     deleted_connection = ""
+    #     sender_disconnects = True
+    #     for connection, sender_file_receiver_dict in manager.sender_id_file_receiver_id_dict.items():
+    #         if sender_id == sender_file_receiver_dict["receiver_id"]:
+    #             # os.remove(os.path.join(
+    #             #     upload_dir, sender_file_receiver_dict["filename"]))
+    #             # i am breaking because each sender would have only one key value pair in the dict. so when we find that one, we should delete it immediately
+    #             deleted_connection = connection
+    #             sender_disconnects = False
+    #             break
+    #     if not sender_disconnects:
+    #         del manager.sender_id_file_receiver_id_dict[deleted_connection]
+    #     manager.disconnect(websocket)
 
 
 if __name__ == "__main__":

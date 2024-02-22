@@ -99,7 +99,7 @@ function cancelUpload() {
     }
 }
 
-
+let streamTab;
 function createReceivedFileElement(fileName, streamable) {
     const receivedFileElement = document.createElement('div');
     receivedFileElement.classList.add('received-file');
@@ -116,22 +116,43 @@ function createReceivedFileElement(fileName, streamable) {
     };
     receivedFileElement.appendChild(downloadButton);
 
+    const videoElement = document.getElementById("videoPlayer");
     if (streamable){
-        const downloadButton = document.createElement('button');
-        downloadButton.textContent = 'Stream';
-        downloadButton.href = `stream/${fileName}`;
-        downloadButton.onclick = function() {
-            window.open(downloadButton.href);
+        const streamButton = document.createElement('button');
+        streamButton.textContent = 'Stream';
+        streamButton.href = `stream/${fileName}`;
+        streamButton.onclick = function() {
+            const source = document.createElement("source");
+            source.src = `stream/${fileName}`;
+            source.type = "video/mp4";
+            videoElement.appendChild(source);
+            videoElement.load();
+            // streamTab = window.open(streamButton.href);
         };
-        receivedFileElement.appendChild(downloadButton);
+        receivedFileElement.appendChild(streamButton);
     }
     // Create delete button
     const deleteButton = document.createElement('button');
     deleteButton.textContent = 'Delete';
     deleteButton.addEventListener('click', function() {
-        // Handle delete action
-        console.log('Delete button clicked for file:', fileName);
-        receivedFileElement.remove(); // Remove the file element from the DOM
+        videoElement.src = "";
+        videoElement.load();
+
+        // Make a DELETE request to the delete endpoint
+        fetch(`/delete-file/${fileName}`, {
+            method: 'DELETE',
+        })
+        .then(response => {
+            if (response.ok) {
+                console.log('File deleted successfully');
+                receivedFileElement.remove(); // Remove the file element from the DOM
+            } else {
+                throw new Error('Failed to delete file');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+        });
     });
     receivedFileElement.appendChild(deleteButton);
 
@@ -139,3 +160,9 @@ function createReceivedFileElement(fileName, streamable) {
     const receivedFilesList = document.getElementById('received-files');
     receivedFilesList.appendChild(receivedFileElement);
 }
+
+window.onbeforeunload = function() {
+    if (streamTab && !streamTab.closed) {
+        return "You have an active stream tab. Closing this tab will also close the stream tab.";
+    }
+};
