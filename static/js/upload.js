@@ -1,18 +1,20 @@
-var sender_id = Date.now();
+let sender_id = Date.now();
+sender_id = sender_id.toString().slice(-5)
 document.querySelector("#sender-id").textContent = sender_id;
 
 function CreateWebsocket(){
-    var receiver_id = document.getElementById("receiver-id").value;
-    var currentUrl = window.location.hostname;
-    ws = new WebSocket(`ws://${currentUrl}:8000/ws/${sender_id}/${receiver_id}`);
-    console.log("This is ws: ", ws)
-    ws.onmessage = function(event) {
-        var message = event.data
-        
-        try{
-            // Attempt to parse the mesasage as JSON
-            var jsonMessage = JSON.parse(message);
+    let receiver_id = document.getElementById("receiver-id").value;
+    let currentUrl = window.location.hostname;
 
+    ws = new WebSocket(`ws://${currentUrl}/ws/${sender_id}/${receiver_id}`);
+    console.log("This is ws: ", ws)
+
+    ws.onmessage = function(event) {
+        let message = event.data
+        console.log("message from sender is", message);
+        try{
+            var jsonMessage = JSON.parse(message);
+            console.log("jsonmessage is", jsonMessage)
             // Show both download and stream buttons
             document.getElementById("stream-button").style.display = "inline-block";
             document.getElementById("download-button").style.display = "inline-block";
@@ -48,47 +50,66 @@ function streamFile() {
 }
 
 
+let xhr;    
 
 function uploadFile() {
-    const fileInput = document.getElementById('file');
-    const progressBar = document.getElementById('upload-progress');
     const formData = new FormData(document.getElementById('upload-form'));
-    const fileName = fileInput.files[0].name;
-    console.log('File Name:', fileName);
-    const xhr = new XMLHttpRequest();
+    const fileInput = document.getElementById('file');
+    const files = fileInput.files;
+
+    // const fileName = fileInput.files[0].name;
+    // console.log('File Name:', fileName);
+    const fileNames = Array.from(files).map(file => file.name);
+    console.log("files sender is sending", fileNames);
+    
+    if (files.length === 0){
+        alert("Please select a file.");
+        return;
+    }
+
+    xhr = new XMLHttpRequest();
+    xhr.open('POST', '/upload-files', true);
 
     xhr.upload.onprogress = function (event) {
+        
         if (event.lengthComputable) {
+            const progressBar = document.getElementById('upload-progress');
+            const progressNumber = document.getElementById('progress_number');
+
             const percentComplete = (event.loaded / event.total) * 100;
             progressBar.style.width = percentComplete + '%';
-            document.getElementById("progress_number").innerHTML = percentComplete.toFixed(2) + '%';
+            progressNumber.innerHTML = percentComplete.toFixed(2) + '%';
         }
     };
 
     xhr.onload = function () {
         if (xhr.status === 200) {
-            console.log('File uploaded successfully!');
-            // const responseHtml = xhr.responseText;
-            // document.body.innerHTML = responseHtml;
-            ws.send(fileName);
+            alert('Upload successful!');
+            resetProgressBarAndPercent();
+            ws.send(fileNames);
         } else {
-            console.error('Error uploading file:', xhr.statusText);
+            alert('Upload failed. Status: ' + xhr.status);
         }
     };
 
-    xhr.open('POST', '/upload-files', true);
+    xhr.onerror = function() {
+        alert('Error occurred while uploading the file.');
+    };
+
     xhr.send(formData);
 }
 
+function resetProgressBarAndPercent(){
+    document.getElementById('upload-progress').style.width = "0%";
+    document.getElementById('progress_number').innerHTML = "0%";
+}
 
 function cancelUpload() {
-    // Add logic to cancel the upload if needed
-    if (xhr && xhr.readyState !== 4) {
-        // Abort the upload
+    if (xhr) {
         xhr.abort();
-        console.log('Upload canceled!');
+        alert('Upload canceled.');
+        resetProgressBarAndPercent();
     } else {
-        console.log('No upload in progress to cancel.');
+        alert('No upload in progress.');
     }
-    // alert("Upload canceled!");
 }

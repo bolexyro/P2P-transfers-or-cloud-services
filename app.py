@@ -51,6 +51,8 @@ def delete_file(filename):
 @app.get(path="/download/{filename}")
 async def download(filename: str, background_tasks: BackgroundTasks):
     # background_tasks.add_task(delete_file, filename)
+    # So i think if the filenames contains # tags, it would lead to afile not found error
+    print("filename is", filename)
     return FileResponse(path=f"uploads/{filename}", filename=filename)
 
 
@@ -91,7 +93,8 @@ class ConnectionManager:
             await connection.send_text(message)
 
     async def send_to(self, messsgae: str, receiver_id: int):
-        video_extensions = ['.mp4', '.mkv', '.avi', '.mov', '.wmv', '.flv']
+        # , '.mkv', '.avi', '.mov', '.wmv', '.flv']
+        video_extensions = ['.mp4']
 
         is_video = False
         for extensions in video_extensions:
@@ -99,6 +102,7 @@ class ConnectionManager:
                 json_data = {"download_link": f"/download/{messsgae}",
                              "stream_link": f"/stream/{messsgae}"}
                 is_video = True
+
         if is_video:
             await self.id_websocket_dict[receiver_id].send_json(json_data)
         else:
@@ -113,9 +117,10 @@ async def websocket_endpoint(websocket: WebSocket, sender_id: int, receiver_id: 
     await manager.connect(websocket, sender_id)
     print(manager.id_websocket_dict)
     try:
+        connection_index = 0
         while True:
             data = await websocket.receive_text()
-            connection_index = 0
+            print(data)
             # in a case where the sender sends one file and later sends another one. The first one wont be delteed if receiver isconnects.
             manager.sender_id_file_receiver_id_dict[f"conn{connection_index}"] = {
                 "sender_id": sender_id, "filename": data, "receiver_id": receiver_id}
@@ -130,8 +135,8 @@ async def websocket_endpoint(websocket: WebSocket, sender_id: int, receiver_id: 
         sender_disconnects = True
         for connection, sender_file_receiver_dict in manager.sender_id_file_receiver_id_dict.items():
             if sender_id == sender_file_receiver_dict["receiver_id"]:
-                os.remove(os.path.join(
-                    upload_dir, sender_file_receiver_dict["filename"]))
+                # os.remove(os.path.join(
+                #     upload_dir, sender_file_receiver_dict["filename"]))
                 # i am breaking because each sender would have only one key value pair in the dict. so when we find that one, we should delete it immediately
                 deleted_connection = connection
                 sender_disconnects = False
