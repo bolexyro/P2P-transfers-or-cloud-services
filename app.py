@@ -67,11 +67,10 @@ def main(filename: str):
 
 class ConnectionManager:
     def __init__(self):
-        self.id_websocket_dict: Dict[int, WebSocket] = {}
+        self.id_websocket_dict: dict[int, WebSocket] = {}
         # this dictionary would store stuffs in this format {"conn0": {sender_id: 9009, "filename": xyz.mp4, "receiver_id": 4244}}
         # i coul have also done Dict[str, int | str]
-        self.sender_id_file_receiver_id_dict: Dict[str, Dict[str, Union[int, str]]] = {
-        }
+        self.sender_receiver: dict[int, int] = {}
 
     async def connect(self, websocket: WebSocket, client_id: int):
         await websocket.accept()
@@ -92,21 +91,8 @@ class ConnectionManager:
         for client_id, connection in self.id_websocket_dict.items():  # connection here is a websocket object
             await connection.send_text(message)
 
-    async def send_to(self, messsgae: str, receiver_id: int):
-        # , '.mkv', '.avi', '.mov', '.wmv', '.flv']
-        video_extensions = ['.mp4']
-
-        is_video = False
-        for extensions in video_extensions:
-            if extensions in messsgae:
-                json_data = {"download_link": f"/download/{messsgae}",
-                             "stream_link": f"/stream/{messsgae}"}
-                is_video = True
-
-        if is_video:
-            await self.id_websocket_dict[receiver_id].send_json(json_data)
-        else:
-            await self.id_websocket_dict[receiver_id].send_text(f"/download/{messsgae}")
+    async def send_to(self, files: list[str], receiver_id: int):
+        await self.id_websocket_dict[receiver_id].send_json(files)
 
 
 manager = ConnectionManager()
@@ -115,19 +101,13 @@ manager = ConnectionManager()
 @app.websocket("/ws/{sender_id}/{receiver_id}")
 async def websocket_endpoint(websocket: WebSocket, sender_id: int, receiver_id: int):
     await manager.connect(websocket, sender_id)
-    print(manager.id_websocket_dict)
     try:
-        connection_index = 0
         while True:
-            data = await websocket.receive_text()
+            data = await websocket.receive_json()
             print(data)
-            # in a case where the sender sends one file and later sends another one. The first one wont be delteed if receiver isconnects.
-            manager.sender_id_file_receiver_id_dict[f"conn{connection_index}"] = {
-                "sender_id": sender_id, "filename": data, "receiver_id": receiver_id}
-            connection_index += 1
-            print(manager.sender_id_file_receiver_id_dict)
-
+            # in a case where the sender sends one file and later sends another one. The first one wont be delteed if receiver isconnects. -
             await manager.send_to(data, receiver_id)
+
     except WebSocketDisconnect:
         # make sure they have closed any tab that is streaming else it won't work.
         # if receiver disconnects is when we want to delete the file.

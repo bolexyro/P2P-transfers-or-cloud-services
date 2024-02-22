@@ -1,67 +1,51 @@
+let ws;
+let xhr;
 let sender_id = Date.now();
 sender_id = sender_id.toString().slice(-5)
 document.querySelector("#sender-id").textContent = sender_id;
 
 function CreateWebsocket(){
     let receiver_id = document.getElementById("receiver-id").value;
+    if(receiver_id == sender_id){
+        alert("You know you are going to be sending to yourself right?");
+    }
     let currentUrl = window.location.hostname;
 
     ws = new WebSocket(`ws://${currentUrl}/ws/${sender_id}/${receiver_id}`);
     console.log("This is ws: ", ws)
 
     ws.onmessage = function(event) {
-        let message = event.data
-        console.log("message from sender is", message);
+        const message = event.data
         try{
-            var jsonMessage = JSON.parse(message);
-            console.log("jsonmessage is", jsonMessage)
-            // Show both download and stream buttons
-            document.getElementById("stream-button").style.display = "inline-block";
-            document.getElementById("download-button").style.display = "inline-block";
-
-            // Set the href attributes for download and stream buttons
-            document.getElementById("download-button").href = jsonMessage.download_link;
-            document.getElementById("stream-button").href = jsonMessage.stream_link;
-
+            const jsonMessage = JSON.parse(message);
+            // # , '.mkv', '.avi', '.mov', '.wmv', '.flv']
+            allowedVideoExtensions = '.mp4';
+            jsonMessage.forEach(function(item) {
+                if (item.includes(allowedVideoExtensions)){
+                    createReceivedFileElement(item, true);
+                }else{
+                    createReceivedFileElement(item, false);
+                } 
+            });
             }catch(e){
-            // If parsing as JSON fails, treat it as a text message
-            // Show only the download button
-                document.getElementById("download-button").style.display = "inline-block";
-                // Set the href attribute for the download button
-                document.getElementById("download-button").href = message;
+                alert(e);
         }
         }
-
     };
-function downloadFile() {
-    // Redirect to the download link
-    window.location.href = document.getElementById("download-button").href;
-    // document.getElementById("stream-button").style.display = "none";
-    // document.getElementById("download-button").style.display = "none"
-}
 
-// Function to handle the stream button click
-function streamFile() {
-    // Redirect to the stream link
-    window.open(document.getElementById("stream-button").href)
-    // window.location.href = 
-    // document.getElementById("stream-button").style.display = "none";
-    // document.getElementById("download-button").style.display = "none"
-}
-
-
-let xhr;    
 
 function uploadFile() {
     const formData = new FormData(document.getElementById('upload-form'));
     const fileInput = document.getElementById('file');
     const files = fileInput.files;
 
-    // const fileName = fileInput.files[0].name;
-    // console.log('File Name:', fileName);
     const fileNames = Array.from(files).map(file => file.name);
     console.log("files sender is sending", fileNames);
     
+    if (!ws){
+        alert("Connect to someone first");
+        return;
+    }
     if (files.length === 0){
         alert("Please select a file.");
         return;
@@ -86,7 +70,8 @@ function uploadFile() {
         if (xhr.status === 200) {
             alert('Upload successful!');
             resetProgressBarAndPercent();
-            ws.send(fileNames);
+            console.log("filenames are", fileNames);
+            ws.send(JSON.stringify(fileNames));
         } else {
             alert('Upload failed. Status: ' + xhr.status);
         }
@@ -112,4 +97,45 @@ function cancelUpload() {
     } else {
         alert('No upload in progress.');
     }
+}
+
+
+function createReceivedFileElement(fileName, streamable) {
+    const receivedFileElement = document.createElement('div');
+    receivedFileElement.classList.add('received-file');
+
+    const fileNameSpan = document.createElement('span');
+    fileNameSpan.textContent = fileName;
+    receivedFileElement.appendChild(fileNameSpan);
+
+    const downloadButton = document.createElement('button');
+    downloadButton.textContent = 'Download';
+    downloadButton.href = `download/${fileName}`;
+    downloadButton.onclick = function() {
+        window.location.href = downloadButton.href;
+    };
+    receivedFileElement.appendChild(downloadButton);
+
+    if (streamable){
+        const downloadButton = document.createElement('button');
+        downloadButton.textContent = 'Stream';
+        downloadButton.href = `stream/${fileName}`;
+        downloadButton.onclick = function() {
+            window.open(downloadButton.href);
+        };
+        receivedFileElement.appendChild(downloadButton);
+    }
+    // Create delete button
+    const deleteButton = document.createElement('button');
+    deleteButton.textContent = 'Delete';
+    deleteButton.addEventListener('click', function() {
+        // Handle delete action
+        console.log('Delete button clicked for file:', fileName);
+        receivedFileElement.remove(); // Remove the file element from the DOM
+    });
+    receivedFileElement.appendChild(deleteButton);
+
+    // Append the created element to the received files list
+    const receivedFilesList = document.getElementById('received-files');
+    receivedFilesList.appendChild(receivedFileElement);
 }
